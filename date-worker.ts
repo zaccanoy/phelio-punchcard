@@ -1,3 +1,5 @@
+import { weekdayToNum } from './models';
+
 export module DateWorker {
   export function convertToBeginningOfDay(date: Date) {
     // Set to the beginning of the day.
