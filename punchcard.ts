@@ -1,5 +1,7 @@
 import DateWorker from "./date-worker";
 
+import { PunchcardData, PunchcardWorkingData, PunchcardMode, PunchcardOptions, maxDays, maxWeeks, maxMonths, weekdayToNum } from "./models";
+
 /**
  * This class creates and updates punchcards, given the commit data for some
  * authors.
@@ -201,13 +203,35 @@ class Punchcard {
           DateWorker.convertToBeginningOfWeek,
           date => date.setDate(date.getDate() + 7)
         );
-        colData = this.getColData();
+        colData = this.getColData(
+          colorData.map(date => new Date(date)),
+          date => date.toLocaleDateString("en-us", { year: "numeric" }),
+          date => {
+            const nextMonth = new Date(date);
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            nextMonth.setDate(1);
+            return (nextMonth.getTime() - date.getTime()) / (1000 * 60 * 60 * 24 * 4);
+          },
+          4
+        );
         break;
       case PunchcardMode.Months:
         colorData = this.getColorData(
           DateWorker.convertToBeginningOfDay,
           date => date.setMonth(date.getMonth() + 1)
         );
+        colData = this.getColData(
+          colorData.map(date => new Date(date)),
+          date => "" + (date.getFullYear() - (date.getFullYear() % 5)),
+          date => {
+            const nextYear = new Date(date);
+            nextYear.setFullYear(nextYear.getFullYear() + 1);
+            nextYear.setMonth(0);
+            nextYear.setDate(1);
+            return (nextYear.getTime() - date.getTime()) / (1000 * 60 * 60 * 24 * 30);
+          },
+          12
+        )
         break;
       default:
         colorData = this.getColorData(
