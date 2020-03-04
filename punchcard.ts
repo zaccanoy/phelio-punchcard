@@ -240,5 +240,17 @@ class Punchcard {
         );
         break;
     }
+
+    let rootElements: HTMLElement[] = [];
+    Object.keys(colorData).forEach(authorName => {
+        
+        colorData.forEach(author => {
+        let rootElement = document.createElement("svg");
+        rootElements.push(rootElement);
+        rootElement.classList.add("phelio-punchcard-root");
+      });
+    });
+
+    
   }
 }
