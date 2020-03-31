@@ -1,3 +1,5 @@
+import Timeframe from './timeframe';
+
 interface PunchcardOptions {
   authorIdKey?: string;
   commitDateKey?: string;

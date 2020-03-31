@@ -3,5 +3,7 @@ enum Timeframe {
   Days,
   Weeks,
   Months,
-  Years
+  Years,
 }
+
+export default Timeframe;

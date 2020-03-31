@@ -15,7 +15,7 @@ class RGBColor {
     const blue = this.blue * (1 - ratioOfColor) + color.blue * ratioOfColor;
 
     return (
-      "#" +
+      '#' +
       Math.round(red).toString(16) +
       Math.round(green).toString(16) +
       Math.round(blue).toString(16)

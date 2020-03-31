@@ -1,6 +1,8 @@
 import AuthorCommitData from './author-commit-data';
 import RGBColor from './rgb-color';
 import PunchcardOptions from './punchcard-options';
+import SVGGridBuilder from './svg-grid-builder';
+import Timeframe from './timeframe';
 
 /** The preferred number of columns. It is set to 30 by default for aesthetic
  * purposes. */
@@ -49,6 +51,8 @@ class PunchcardsBuilder {
    * representing the colors at every x- and y-coordinate in each punchcard,
    * seperated by author. */
   private colorData: { [key: string]: string[][] };
+  private columnHeaders: string[];
+  private grids: SVGGridBuilder[];
 
   /**
    * Constructs a new Punchcard instance.
@@ -172,6 +176,7 @@ class PunchcardsBuilder {
         // y-coordinate is greater than or equal to the number of rows for the
         // current timeframe. Every iteration, we increment the initial date,
         // the final date, and the y-coordinate.
+        this.columnHeaders[x] = this.getColumnHeader(initialDate);
         for (
           ;
           y <= this.getNumberOfRowsForTimeframe();
@@ -209,6 +214,28 @@ class PunchcardsBuilder {
     }
 
     this.generateSVGs();
+  }
+
+  /**
+   * Returns the column header corresponding to the given date.
+   * @param date The date to return the column header for.
+   */
+  private getColumnHeader(date: Date): string {
+    switch (this.timeframe) {
+      case Timeframe.Hours:
+        return date.toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+        });
+      case Timeframe.Days:
+        return date.toLocaleDateString(undefined, { month: 'short' });
+      case Timeframe.Weeks:
+        return date.toLocaleDateString(undefined, { month: 'short' });
+      case Timeframe.Months:
+        return date.toLocaleDateString(undefined, { year: 'numeric' });
+      default:
+        return date.toLocaleDateString(undefined, { year: 'numeric' });
+    }
   }
 
   /**
@@ -354,25 +381,127 @@ class PunchcardsBuilder {
    * to black.
    */
   public setColors(
-    minColor: string = '#FFFFFF',
+    minColor: string = '#DDDDDD',
     maxColor: string = '#000000',
   ): void {
     this.minColor = new RGBColor(minColor);
     this.maxColor = new RGBColor(maxColor);
   }
 
+  setColumns(gridBuilder: SVGGridBuilder) {
+    for (let idx = 0; idx < this.columnHeaders.length; idx++) {
+      switch (this.timeframe) {
+        case Timeframe.Hours:
+        case Timeframe.Weeks:
+        case Timeframe.Months:
+          gridBuilder.addColumn(idx % 3 ? this.columnHeaders[idx] : '');
+          break;
+        case Timeframe.Days:
+          gridBuilder.addColumn(
+            this.columnHeaders[idx - 1] !== this.columnHeaders[idx]
+              ? this.columnHeaders[idx]
+              : '',
+          );
+          break;
+        default:
+          gridBuilder.addColumn(idx % 10 ? this.columnHeaders[idx] : '');
+          break;
+      }
+    }
+  }
+
+  setRowHeaders(gridBuilder: SVGGridBuilder) {
+    switch (this.timeframe) {
+      case Timeframe.Hours:
+        gridBuilder.addRowHeaders(
+          '12 AM',
+          '',
+          '2 AM',
+          '',
+          '4 AM',
+          '',
+          '6 AM',
+          '',
+          '8 AM',
+          '',
+          '12 PM',
+          '',
+          '2 PM',
+          '',
+          '4 PM',
+          '',
+          '6 PM',
+          '',
+          '8 PM',
+          '',
+          '10 PM',
+          '',
+        );
+        break;
+      case Timeframe.Days:
+        gridBuilder.addRowHeaders(
+          'Sunday',
+          '',
+          'Tuesday',
+          '',
+          'Thursday',
+          '',
+          'Saturday',
+        );
+        break;
+      case Timeframe.Weeks:
+        gridBuilder.addRowHeaders('Week 1', 'Week 3');
+        break;
+      case Timeframe.Months:
+        gridBuilder.addRowHeaders(
+          'Jan',
+          '',
+          'Mar',
+          '',
+          'May',
+          '',
+          'Jul',
+          '',
+          'Sep',
+          '',
+          'Nov',
+          '',
+        );
+        break;
+      default:
+        gridBuilder.addRowHeaders(
+          "'0",
+          '',
+          "'2",
+          '',
+          "'4",
+          '',
+          "'6",
+          '',
+          "'8",
+          '',
+        );
+    }
+  }
+
   private generateSVGs() {
-    // let svgElement = document.createElement("svg");
+    this.grids = [];
     for (let author of Object.keys(this.colorData)) {
+      let grid = new SVGGridBuilder();
+      this.grids.push(grid); // NB that this is an assignment-by-reference
+      this.setColumns(grid);
+      this.setRowHeaders(grid);
       for (let x = 0; x < this.colorData[author].length; x++) {
-        for (let y = 0; y < this.colorData[author][x].length; y++) {
-          // TODO:
+        for (const color of this.colorData[author][x]) {
+          grid.addCell(x, color);
         }
       }
     }
   }
 
-  public getAllSVGs() {}
+  public getAllSVGs() {
+    return this.grids.forEach((grid) => grid.toString());
+  }
 }
 
 export default PunchcardsBuilder;

@@ -8,7 +8,7 @@ class SVGGridBuilder {
   private columns: SVGGridColumn[];
   private rowHeaders: string[];
 
-  public constructor(options: SVGGridBuilderOptions) {
+  public constructor(options?: SVGGridBuilderOptions) {
     this.cellSize = options.cellSize || this.cellSize;
     this.cellPadding = options.cellPadding || this.cellPadding;
     this.cellBox = this.cellSize + this.cellPadding;
@@ -20,6 +20,12 @@ class SVGGridBuilder {
       this.cellSize,
       header,
     );
+  }
+
+  public addRowHeaders(...args: string[]) {
+    for (const [idx, rowHeader] of args.entries()) {
+      this.rowHeaders[idx] = rowHeader;
+    }
   }
 
   public addRowHeader(yPosition: number, header: string) {
