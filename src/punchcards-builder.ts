@@ -63,7 +63,7 @@ class PunchcardsBuilder {
    * @param punchcardOptions The options for the Punchcard instance.
    */
   public constructor(
-    commitSourceData: [{}],
+    commitSourceData: [{ [key: string]: string }],
     punchcardOptions: PunchcardOptions,
   ) {
     this.setColors(punchcardOptions.minColor, punchcardOptions.maxColor);
@@ -73,11 +73,6 @@ class PunchcardsBuilder {
       punchcardOptions.commitDateKey,
       punchcardOptions.timeframe,
     );
-
-    // Count commits in each timeframe
-    // Make a 2D array of numbers
-    // Make a 2D array of colors
-    // Create SVG
   }
 
   /**
@@ -99,6 +94,8 @@ class PunchcardsBuilder {
     commitDateKey: string = 'commit_date',
     timeframe?: Timeframe,
   ): void {
+    this.commitData = {};
+
     // Loop through each datum of the source data.
     for (const sourceDatum of commitSourceData) {
       // Find the earliest and latest commit dates for later use.
@@ -116,12 +113,14 @@ class PunchcardsBuilder {
       }
 
       // Push the commit date to the correct author.
+      this.commitData[sourceDatum[authorIdKey]] = this.commitData[sourceDatum[authorIdKey]] || [];
       this.commitData[sourceDatum[authorIdKey]].push(commitDate);
     }
 
-    this.setBufferTimeframes();
     // Next we need to reset the timeframe since the data changed.
     this.setTimeframe(timeframe);
+    this.setBufferTimeframes();
+    this.setColorData();
   }
 
   /**
@@ -130,7 +129,7 @@ class PunchcardsBuilder {
    * @param timeframe An optional override for the timeframe. If it is not
    * provided, the function finds the appropriate one programmatically.
    */
-  public setTimeframe(timeframe?: Timeframe): void {
+  private setTimeframe(timeframe?: Timeframe): void {
     if (timeframe === undefined) {
       // Timeframe is not provided by user, so we choose the appropriate one.
       const numDays =
@@ -141,7 +140,6 @@ class PunchcardsBuilder {
       else if (numDays <= maxMonths) this.timeframe = Timeframe.Months;
       else this.timeframe = Timeframe.Years;
     } else this.timeframe = timeframe;
-    this.setColorData();
   }
 
   /**
@@ -150,45 +148,46 @@ class PunchcardsBuilder {
    * function to be called.
    */
   private setColorData(): void {
-    // Each key is an author's ID and each value is the number of commits in the
-    // timeframe.
-    const numberData: { [key: string]: number[][] } = {};
-    // The initial date is the earliest date for the punchcards, which is then
-    // normalized. This date will be incremented each iteration through the
-    // timeframe.
-    let initialDate = this.normalizeDate(this.earliestDate);
-    // The final date is the next timeframe away from the earliest date. This
-    // will also be incremented each iteration through the timeframe.
-    let finalDate = this.incrementDate(initialDate);
-    // We will get the highest number of commits to get consistent coloring
-    // across the cards.
+    this.columnHeaders = [];
     let highestNumCommits = 0;
-    for (const author of Object.keys(this.commitData)) {
+    // Each element in the array is the number of commits.
+    const numberData: { [key: string]: number[][] } = {};
+    this.colorData = {};
+    let initialDate = this.normalizeDate(this.earliestDate);
+    // The final date is initialized to the next timeframe andalso incremented.
+    let finalDate = new Date(initialDate);
+    this.incrementDate(finalDate);
+
+    for (const authorId of Object.keys(this.commitData)) {
+      numberData[authorId] = [];
       // Get the first timeframe index, this will be the first y index in our
       // two-dimensional array of timeframes.
       let y = this.bufferTimeframes;
+      console.log(y);
       // Loop through the current x-coordinate. This should continue until the
       // initial date is greater than the latest date in the data. Every
       // iteration, we increment the x-coordinate.
-      for (let x = 0; initialDate.getTime() > this.latestDate.getTime(); x++) {
+      for (let x = 0; initialDate.getTime() < this.latestDate.getTime(); x++) {
         // Loop through the current y-coordinate. This should continue until the
         // initial date is greater than the latest date in the data or the
         // y-coordinate is greater than or equal to the number of rows for the
         // current timeframe. Every iteration, we increment the initial date,
         // the final date, and the y-coordinate.
         this.columnHeaders[x] = this.getColumnHeader(initialDate);
+        numberData[authorId][x] = [];
         for (
           ;
           y <= this.getNumberOfRowsForTimeframe();
           this.incrementDate(initialDate), this.incrementDate(finalDate), y++
         ) {
           // Set the number for each x- and y-coordinate.
-          const currentCommits = this.commitData[author].filter(
-            (value) =>
-              initialDate.getTime() >= value.getTime() &&
-              finalDate.getTime() < value.getTime(),
+          const currentCommits = this.commitData[authorId].filter(
+            (value) => {
+              return initialDate.getTime() <= value.getTime() &&
+                finalDate.getTime() > value.getTime();
+            }
           ).length;
-          numberData[author][x][y] = currentCommits;
+          numberData[authorId][x][y] = currentCommits;
           if (highestNumCommits < currentCommits) {
             highestNumCommits = currentCommits;
           }
@@ -198,16 +197,21 @@ class PunchcardsBuilder {
         y = 0;
       }
 
+      console.log(numberData);
+
       // Populate the color data with the correct values, given the number data.
-      this.colorData = {};
-      for (let x = 0; x < numberData[author].length; x++) {
+      this.colorData[authorId] = [];
+      for (let x = 0; x < numberData[authorId].length; x++) {
+        this.colorData[authorId][x] = [];
         for (y = 0; y < this.getNumberOfRowsForTimeframe(); y++) {
-          const numberDatum = numberData[author][x][y];
+          const numberDatum = numberData[authorId][x][y];
           if (numberDatum !== undefined) {
-            this.colorData[author][x][y] = this.minColor.mix(
+            this.colorData[authorId][x][y] = this.minColor.mix(
               this.maxColor,
-              numberDatum / highestNumCommits,
+              !highestNumCommits ? 0 : numberDatum / highestNumCommits,
             );
+          } else {
+            this.colorData[authorId][x][y] = 'rgba(0, 0, 0, 0)';
           }
         }
       }
@@ -352,26 +356,24 @@ class PunchcardsBuilder {
    * instead, returns a new date to ensure no loss of data and to follow a
    * functional pattern.
    */
-  private incrementDate(date: Date): Date {
-    let nextDate = new Date(date);
+  private incrementDate(date: Date): void {
     switch (this.timeframe) {
       case Timeframe.Hours:
-        nextDate.setHours(nextDate.getHours() + 1);
+        date.setHours(date.getHours() + 1);
         break;
       case Timeframe.Days:
-        nextDate.setDate(nextDate.getDate() + 1);
+        date.setDate(date.getDate() + 1);
         break;
       case Timeframe.Weeks:
-        nextDate.setDate(nextDate.getDate() + 7);
+        date.setDate(date.getDate() + 7);
         break;
       case Timeframe.Months:
-        nextDate.setMonth(nextDate.getMonth() + 1);
+        date.setMonth(date.getMonth() + 1);
         break;
       default:
-        nextDate.setFullYear(nextDate.getFullYear() + 1);
+        date.setFullYear(date.getFullYear() + 1);
         break;
     }
-    return nextDate;
   }
 
   /**
@@ -381,7 +383,7 @@ class PunchcardsBuilder {
    * to black.
    */
   public setColors(
-    minColor: string = '#DDDDDD',
+    minColor: string = '#EEEEEE',
     maxColor: string = '#000000',
   ): void {
     this.minColor = new RGBColor(minColor);
@@ -394,7 +396,7 @@ class PunchcardsBuilder {
         case Timeframe.Hours:
         case Timeframe.Weeks:
         case Timeframe.Months:
-          gridBuilder.addColumn(idx % 3 ? this.columnHeaders[idx] : '');
+          gridBuilder.addColumn(idx % 3 === 0 ? this.columnHeaders[idx] : '');
           break;
         case Timeframe.Days:
           gridBuilder.addColumn(
@@ -424,6 +426,8 @@ class PunchcardsBuilder {
           '',
           '8 AM',
           '',
+          '10 AM',
+          '',
           '12 PM',
           '',
           '2 PM',
@@ -440,17 +444,17 @@ class PunchcardsBuilder {
         break;
       case Timeframe.Days:
         gridBuilder.addRowHeaders(
-          'Sunday',
+          'Sun',
           '',
-          'Tuesday',
+          'Tue',
           '',
-          'Thursday',
+          'Thu',
           '',
-          'Saturday',
+          'Sat',
         );
         break;
       case Timeframe.Weeks:
-        gridBuilder.addRowHeaders('Week 1', 'Week 3');
+        gridBuilder.addRowHeaders('Week 1', '' 'Week 3', '');
         break;
       case Timeframe.Months:
         gridBuilder.addRowHeaders(
@@ -486,13 +490,13 @@ class PunchcardsBuilder {
 
   private generateSVGs() {
     this.grids = [];
-    for (let author of Object.keys(this.colorData)) {
+    for (let authorId of Object.keys(this.colorData)) {
       let grid = new SVGGridBuilder();
       this.grids.push(grid); // NB that this is an assignment-by-reference
       this.setColumns(grid);
       this.setRowHeaders(grid);
-      for (let x = 0; x < this.colorData[author].length; x++) {
-        for (const color of this.colorData[author][x]) {
+      for (let x = 0; x < this.colorData[authorId].length; x++) {
+        for (const color of this.colorData[authorId][x]) {
           grid.addCell(x, color);
         }
       }
@@ -500,7 +504,7 @@ class PunchcardsBuilder {
   }
 
   public getAllSVGs() {
-    return this.grids.forEach((grid) => grid.toString());
+    return this.grids.map((grid) => grid.toString());
   }
 }
 

@@ -18,7 +18,7 @@ class SVGGridCell {
 
   public toString() {
     return `
-      <rect x="${this.xPosition}" y="${this.yPosition} width="${this.cellSize}" height="${this.cellSize}" />
+      <rect x="${this.xPosition}" y="${this.yPosition}" width="${this.cellSize}" height="${this.cellSize}" fill="${this.color}" />
     `;
   }
 }

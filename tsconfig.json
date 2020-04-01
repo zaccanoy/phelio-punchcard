@@ -4,14 +4,16 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "target": "ES6",
+    "declaration": true,
     "noImplicitAny": true,
     "moduleResolution": "Node",
     "sourceMap": true,
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
+      "~*": ["./*"],
       "*": ["node_modules/*"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "test/**/*"]
 }

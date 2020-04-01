@@ -5,20 +5,31 @@ class SVGGridBuilder {
   private cellSize = 14;
   private cellPadding = 2;
   private cellBox: number;
+  private textSize: number;
+  private textOffsetY: number;
   private columns: SVGGridColumn[];
   private rowHeaders: string[];
 
   public constructor(options?: SVGGridBuilderOptions) {
-    this.cellSize = options.cellSize || this.cellSize;
-    this.cellPadding = options.cellPadding || this.cellPadding;
+    this.cellSize = options ? options.cellSize || this.cellSize : this.cellSize;
+    this.cellPadding = options
+      ? options.cellPadding || this.cellPadding
+      : this.cellPadding;
     this.cellBox = this.cellSize + this.cellPadding;
+    this.textSize = this.cellSize * 0.75;
+    this.textOffsetY = this.cellSize * 0.25;
+    this.columns = [];
+    this.rowHeaders = [];
   }
 
   public addColumn(header: string) {
-    this.columns[this.columns.length] = new SVGGridColumn(
-      this.cellBox * this.columns.length,
-      this.cellSize,
-      header,
+    this.columns.push(
+      new SVGGridColumn(
+        this.cellBox * this.columns.length,
+        this.cellSize,
+        this.cellPadding,
+        header,
+      ),
     );
   }
 
@@ -38,20 +49,24 @@ class SVGGridBuilder {
 
   public toString(): string {
     return `
-      <svg width="${this.cellSize * this.columns.length}" height="${
-      this.cellSize * Math.max(...this.columns.map((col) => col.length()))
+      <svg width="${this.cellBox * (this.columns.length + 1) + 44}" height="${
+      this.cellBox * Math.max(...this.columns.map((col) => col.length())) + 20
     }">
-        <g transform="translate(10, 20)">
-          ${this.columns.forEach((column) => column.toString())}
+        <g transform="translate(44, 20)">
+          ${this.columns.map((column) => column.toString()).join('')}
         </g>
-        <g>
-          ${this.rowHeaders.forEach(
-            (rowHeader, index) => `
-          <text x="0" y="${index * this.cellBox}">${
-              rowHeader ? rowHeader : ''
-            }</text>
+        <g transform="translate(40, ${20 + this.cellSize})">
+          ${this.rowHeaders
+            .map(
+              (rowHeader, index) => `
+          <text font-size="${
+            this.textSize
+          }" font-family="sans-serif" text-anchor="end" x="0" y="${
+                index * this.cellBox - this.textOffsetY
+              }">${rowHeader ? rowHeader : ''}</text>
         `,
-          )}
+            )
+            .join('')}
         </g>
       </svg>
     `;
