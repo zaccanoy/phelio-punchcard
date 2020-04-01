@@ -5,9 +5,8 @@ import Timeframe from '../src/timeframe';
 window.onload = () => {
   let punchcardsBuilder = new PunchcardsBuilder(data, {
     maxColor: '#990000',
-    timeframe: Timeframe.Hours,
   });
   document.getElementById(
     'entry',
-  ).innerHTML = punchcardsBuilder.getAllSVGs()[0];
+  ).innerHTML = punchcardsBuilder.getAllSVGs()[1];
 };

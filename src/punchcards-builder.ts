@@ -52,7 +52,7 @@ class PunchcardsBuilder {
    * seperated by author. */
   private colorData: { [key: string]: string[][] };
   private columnHeaders: string[];
-  private grids: SVGGridBuilder[];
+  private grids: { [key: string]: SVGGridBuilder };
 
   /**
    * Constructs a new Punchcard instance.
@@ -113,7 +113,9 @@ class PunchcardsBuilder {
       }
 
       // Push the commit date to the correct author.
-      this.commitData[sourceDatum[authorIdKey]] = this.commitData[sourceDatum[authorIdKey]] || [];
+      if (this.commitData[sourceDatum[authorIdKey]] === undefined) {
+        this.commitData[sourceDatum[authorIdKey]] = [];
+      }
       this.commitData[sourceDatum[authorIdKey]].push(commitDate);
     }
 
@@ -150,20 +152,19 @@ class PunchcardsBuilder {
   private setColorData(): void {
     this.columnHeaders = [];
     let highestNumCommits = 0;
-    // Each element in the array is the number of commits.
-    const numberData: { [key: string]: number[][] } = {};
     this.colorData = {};
-    let initialDate = this.normalizeDate(this.earliestDate);
-    // The final date is initialized to the next timeframe andalso incremented.
-    let finalDate = new Date(initialDate);
-    this.incrementDate(finalDate);
 
     for (const authorId of Object.keys(this.commitData)) {
+      let initialDate = this.normalizeDate(this.earliestDate);
+      // Each element in the array is the number of commits.
+      const numberData: { [key: string]: number[][] } = {};
+      // The final date is initialized to the next timeframe andalso incremented.
+      let finalDate = new Date(initialDate);
+      this.incrementDate(finalDate);
       numberData[authorId] = [];
       // Get the first timeframe index, this will be the first y index in our
       // two-dimensional array of timeframes.
       let y = this.bufferTimeframes;
-      console.log(y);
       // Loop through the current x-coordinate. This should continue until the
       // initial date is greater than the latest date in the data. Every
       // iteration, we increment the x-coordinate.
@@ -181,12 +182,12 @@ class PunchcardsBuilder {
           this.incrementDate(initialDate), this.incrementDate(finalDate), y++
         ) {
           // Set the number for each x- and y-coordinate.
-          const currentCommits = this.commitData[authorId].filter(
-            (value) => {
-              return initialDate.getTime() <= value.getTime() &&
-                finalDate.getTime() > value.getTime();
-            }
-          ).length;
+          const currentCommits = this.commitData[authorId].filter((value) => {
+            return (
+              initialDate.getTime() <= value.getTime() &&
+              finalDate.getTime() > value.getTime()
+            );
+          }).length;
           numberData[authorId][x][y] = currentCommits;
           if (highestNumCommits < currentCommits) {
             highestNumCommits = currentCommits;
@@ -196,8 +197,6 @@ class PunchcardsBuilder {
         // y-coordinate that cooresponds to the earliest date.
         y = 0;
       }
-
-      console.log(numberData);
 
       // Populate the color data with the correct values, given the number data.
       this.colorData[authorId] = [];
@@ -443,18 +442,10 @@ class PunchcardsBuilder {
         );
         break;
       case Timeframe.Days:
-        gridBuilder.addRowHeaders(
-          'Sun',
-          '',
-          'Tue',
-          '',
-          'Thu',
-          '',
-          'Sat',
-        );
+        gridBuilder.addRowHeaders('Sun', '', 'Tue', '', 'Thu', '', 'Sat');
         break;
       case Timeframe.Weeks:
-        gridBuilder.addRowHeaders('Week 1', '' 'Week 3', '');
+        gridBuilder.addRowHeaders('Week 1', '', 'Week 3', '');
         break;
       case Timeframe.Months:
         gridBuilder.addRowHeaders(
@@ -489,10 +480,10 @@ class PunchcardsBuilder {
   }
 
   private generateSVGs() {
-    this.grids = [];
+    this.grids = {};
     for (let authorId of Object.keys(this.colorData)) {
       let grid = new SVGGridBuilder();
-      this.grids.push(grid); // NB that this is an assignment-by-reference
+      this.grids[authorId] = grid; // NB that this is an assignment-by-reference
       this.setColumns(grid);
       this.setRowHeaders(grid);
       for (let x = 0; x < this.colorData[authorId].length; x++) {
@@ -504,7 +495,13 @@ class PunchcardsBuilder {
   }
 
   public getAllSVGs() {
-    return this.grids.map((grid) => grid.toString());
+    return Object.keys(this.grids).reduce(
+      (prev, authorId) => ({
+        ...prev,
+        [authorId]: this.grids[authorId].toString(),
+      }),
+      {},
+    );
   }
 }
 
