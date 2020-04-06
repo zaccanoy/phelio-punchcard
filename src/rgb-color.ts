@@ -9,7 +9,7 @@ class RGBColor {
     this.blue = parseInt(hexString.substr(5, 2), 16) / 255;
   }
 
-  public mix(color: RGBColor, ratioOfColor: number) {
+  public mix(color: RGBColor, ratioOfColor: number): string {
     const red =
       255 * (this.red * (1 - ratioOfColor) + color.red * ratioOfColor);
     const green =

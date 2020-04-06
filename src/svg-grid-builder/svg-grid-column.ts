@@ -21,7 +21,7 @@ class SVGGridColumn {
     this.cells = cells || [];
   }
 
-  public addCell(color: string) {
+  public addCell(color: string): void {
     this.cells.push(
       new SVGGridCell(
         0,
@@ -32,7 +32,7 @@ class SVGGridColumn {
     );
   }
 
-  public toString() {
+  public toString(): string {
     return `
     <g transform="translate(${this.xPosition}, 0)">
       <text font-size="11" font-family="sans-serif" x="0" y="-4">${
@@ -43,7 +43,7 @@ class SVGGridColumn {
     `;
   }
 
-  public length() {
+  public length(): number {
     return this.cells.length;
   }
 }

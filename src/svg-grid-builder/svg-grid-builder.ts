@@ -22,7 +22,7 @@ class SVGGridBuilder {
     this.rowHeaders = [];
   }
 
-  public addColumn(header: string) {
+  public addColumn(header: string): void {
     this.columns.push(
       new SVGGridColumn(
         this.cellBox * this.columns.length,
@@ -33,13 +33,13 @@ class SVGGridBuilder {
     );
   }
 
-  public addRowHeaders(...args: string[]) {
+  public addRowHeaders(...args: string[]): void {
     for (const [idx, rowHeader] of args.entries()) {
       this.rowHeaders[idx] = rowHeader;
     }
   }
 
-  public addRowHeader(yPosition: number, header: string) {
+  public addRowHeader(yPosition: number, header: string): void {
     this.rowHeaders[yPosition] = header;
   }
 

@@ -1,11 +1,10 @@
 import AuthorCommitData from './author-commit-data';
 import RGBColor from './rgb-color';
 import PunchcardOptions from './punchcard-options';
-import SVGGridBuilder from './svg-grid-builder';
+import SVGGridBuilder from './svg-grid-builder/svg-grid-builder';
 import Timeframe from './timeframe';
 
-/** The preferred number of columns. It is set to 30 by default for aesthetic
- * purposes. */
+/** The preferred number of columns. It is set to 30 by default. */
 const numCols = 30;
 /** The maximum number for the recommended mode to be days, which is the
  * number of days in a week multiplied by the preferred number of columns. */
@@ -89,9 +88,9 @@ class PunchcardsBuilder {
    * appropriate timeframe is chosen programmatically.
    */
   public setCommitData(
-    commitSourceData: [{ [key: string]: string }],
-    authorIdKey: string = 'author_id',
-    commitDateKey: string = 'commit_date',
+    commitSourceData: { [key: string]: string }[],
+    authorIdKey = 'author_id',
+    commitDateKey = 'commit_date',
     timeframe?: Timeframe,
   ): void {
     this.commitData = {};
@@ -99,7 +98,7 @@ class PunchcardsBuilder {
     // Loop through each datum of the source data.
     for (const sourceDatum of commitSourceData) {
       // Find the earliest and latest commit dates for later use.
-      const commitDate = new Date(<string>sourceDatum[commitDateKey]);
+      const commitDate = new Date(sourceDatum[commitDateKey]);
       if (
         this.earliestDate === undefined ||
         this.earliestDate.getTime() > commitDate.getTime()
@@ -155,11 +154,11 @@ class PunchcardsBuilder {
     this.colorData = {};
 
     for (const authorId of Object.keys(this.commitData)) {
-      let initialDate = this.normalizeDate(this.earliestDate);
+      const initialDate = this.normalizeDate(this.earliestDate);
       // Each element in the array is the number of commits.
       const numberData: { [key: string]: number[][] } = {};
       // The final date is initialized to the next timeframe andalso incremented.
-      let finalDate = new Date(initialDate);
+      const finalDate = new Date(initialDate.getTime());
       this.incrementDate(finalDate);
       numberData[authorId] = [];
       // Get the first timeframe index, this will be the first y index in our
@@ -278,7 +277,7 @@ class PunchcardsBuilder {
         break;
       case Timeframe.Weeks: {
         // Find the first full week of the month.
-        let firstOfMonth = new Date(this.earliestDate);
+        const firstOfMonth = new Date(this.earliestDate.getTime());
         firstOfMonth.setDate(1);
         if (this.getWeekdayIndex(firstOfMonth) !== 0) {
           firstOfMonth.setDate(
@@ -312,7 +311,7 @@ class PunchcardsBuilder {
    * pattern.
    */
   private normalizeDate(date: Date): Date {
-    let normalizedDate = new Date(date);
+    const normalizedDate = new Date(date.getTime());
     switch (this.timeframe) {
       case Timeframe.Hours:
         normalizedDate.setHours(normalizedDate.getHours(), 0, 0, 0);
@@ -381,15 +380,12 @@ class PunchcardsBuilder {
    * @param maxColor The color for the maximum number of commits. This defaults
    * to black.
    */
-  public setColors(
-    minColor: string = '#EEEEEE',
-    maxColor: string = '#000000',
-  ): void {
+  public setColors(minColor = '#EEEEEE', maxColor = '#000000'): void {
     this.minColor = new RGBColor(minColor);
     this.maxColor = new RGBColor(maxColor);
   }
 
-  setColumns(gridBuilder: SVGGridBuilder) {
+  setColumns(gridBuilder: SVGGridBuilder): void {
     for (let idx = 0; idx < this.columnHeaders.length; idx++) {
       switch (this.timeframe) {
         case Timeframe.Hours:
@@ -411,7 +407,7 @@ class PunchcardsBuilder {
     }
   }
 
-  setRowHeaders(gridBuilder: SVGGridBuilder) {
+  setRowHeaders(gridBuilder: SVGGridBuilder): void {
     switch (this.timeframe) {
       case Timeframe.Hours:
         gridBuilder.addRowHeaders(
@@ -479,10 +475,10 @@ class PunchcardsBuilder {
     }
   }
 
-  private generateSVGs() {
+  private generateSVGs(): void {
     this.grids = {};
-    for (let authorId of Object.keys(this.colorData)) {
-      let grid = new SVGGridBuilder();
+    for (const authorId of Object.keys(this.colorData)) {
+      const grid = new SVGGridBuilder();
       this.grids[authorId] = grid; // NB that this is an assignment-by-reference
       this.setColumns(grid);
       this.setRowHeaders(grid);
@@ -494,7 +490,7 @@ class PunchcardsBuilder {
     }
   }
 
-  public getAllSVGs() {
+  public getAllSVGs(): { [key: string]: string } {
     return Object.keys(this.grids).reduce(
       (prev, authorId) => ({
         ...prev,

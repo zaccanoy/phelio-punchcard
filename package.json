@@ -6,8 +6,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "parcel build ./src/index.ts",
-    "debug": "parcel ./test/index.html"
+    "build": "webpack"
   },
   "repository": {
     "type": "git",
@@ -29,6 +28,9 @@
     "eslint-plugin-prettier": "^3.1.2",
     "parcel-bundler": "^1.12.4",
     "prettier": "^2.0.2",
-    "typescript": "^3.8.3"
+    "ts-loader": "^6.2.2",
+    "typescript": "^3.8.3",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11"
   }
 }

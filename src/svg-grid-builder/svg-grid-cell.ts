@@ -16,7 +16,7 @@ class SVGGridCell {
     this.color = color;
   }
 
-  public toString() {
+  public toString(): string {
     return `
       <rect x="${this.xPosition}" y="${this.yPosition}" width="${this.cellSize}" height="${this.cellSize}" fill="${this.color}" />
     `;
