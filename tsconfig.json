@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM"],
+    "module": "ES6",
+    "noImplicitAny": true,
+    "outDir": "dist",
+    "paths": {
+      "~*": ["./*"],
+      "*": ["node_modules/*"]
+    },
+    "sourceMap": true,
+    "target": "ES5"
+  },
+  "include": ["src/**/*", "example/**/*"]
+}
