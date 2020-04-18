@@ -1,4 +1,4 @@
-class RGBColor {
+export class RGBColor {
   protected red: number;
   protected green: number;
   protected blue: number;
@@ -30,5 +30,3 @@ class RGBColor {
     return '#' + redString + greenString + blueString;
   }
 }
-
-export default RGBColor;

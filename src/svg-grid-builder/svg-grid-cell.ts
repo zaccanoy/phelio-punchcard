@@ -1,7 +1,7 @@
 /**
  * A class that handles the state and logic for the SVGGridCell.
  */
-class SVGGridCell {
+export class SVGGridCell {
   private color: string;
   private cellSize: number;
   private yPosition: number;
@@ -25,5 +25,3 @@ class SVGGridCell {
     return `<rect x="0" y="${this.yPosition}" width="${this.cellSize}" height="${this.cellSize}" fill="${this.color}" />`;
   }
 }
-
-export default SVGGridCell;

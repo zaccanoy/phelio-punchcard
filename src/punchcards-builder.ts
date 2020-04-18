@@ -1,6 +1,6 @@
-import RGBColor from './rgb-color';
-import PunchcardOptions from './punchcard-options';
-import SVGGridBuilder from './svg-grid-builder/svg-grid-builder';
+import { RGBColor } from './rgb-color';
+import { PunchcardOptions } from './punchcard-options';
+import { SVGGridBuilder } from './svg-grid-builder/svg-grid-builder';
 import { Timeframe } from './timeframe';
 import { PunchcardData } from './punchcard-data/index';
 import { PunchcardUtilities } from './punchcard-utilities';

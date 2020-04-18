@@ -1,7 +1,7 @@
-import SVGGridBuilderOptions from './svg-grid-builder-options';
-import SVGGridColumn from './svg-grid-column';
+import { SVGGridBuilderOptions } from './svg-grid-builder-options';
+import { SVGGridColumn } from './svg-grid-column';
 
-class SVGGridBuilder {
+export class SVGGridBuilder {
   private cellSize = 14;
   private cellPadding = 2;
   private cellBox: number;
@@ -53,5 +53,3 @@ class SVGGridBuilder {
       .join('')}</g></svg>`;
   }
 }
-
-export default SVGGridBuilder;

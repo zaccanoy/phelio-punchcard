@@ -4,7 +4,7 @@ import { PunchcardDataConverter } from './punchcard-data/index';
 /**
  * The options for building a punchcard.
  */
-interface PunchcardOptions<T> {
+export interface PunchcardOptions<T> {
   /** The timeframe, if you don't want it to be chosen dynamically. */
   timeframe?: Timeframe;
   /** The color for a minimum number of commits. */
@@ -14,5 +14,3 @@ interface PunchcardOptions<T> {
   /** The function for converting the data. */
   converterFunction: PunchcardDataConverter<T>;
 }
-
-export default PunchcardOptions;

@@ -1,9 +1,9 @@
-import SVGGridCell from './svg-grid-cell';
+import { SVGGridCell } from './svg-grid-cell';
 
 /**
  * A class that handles the state and functionality of an SVG grid column.
  */
-class SVGGridColumn {
+export class SVGGridColumn {
   private xPosition: number;
   private cellSize: number;
   private cellBox: number;
@@ -51,5 +51,3 @@ class SVGGridColumn {
     return this.cells.length;
   }
 }
-
-export default SVGGridColumn;
