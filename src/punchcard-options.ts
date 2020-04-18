@@ -13,4 +13,6 @@ export interface PunchcardOptions<T> {
   maxColor?: string;
   /** The function for converting the data. */
   converterFunction: PunchcardDataConverter<T>;
+  /** The intensity of color to start from, in ratio from minimum to maximum. */
+  startAtRatio?: number;
 }

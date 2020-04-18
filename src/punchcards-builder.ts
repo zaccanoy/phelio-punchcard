@@ -27,6 +27,7 @@ export class PunchcardsBuilder<T> {
   private colorData: { [key: string]: string[][] };
   private columnHeaders: string[];
   private grids: { [key: string]: SVGGridBuilder };
+  private startAtRatio: number;
 
   /**
    * Constructs a new Punchcard instance.
@@ -36,6 +37,7 @@ export class PunchcardsBuilder<T> {
   public constructor(rawData: T, punchcardOptions: PunchcardOptions<T>) {
     this.setColors(punchcardOptions.minColor, punchcardOptions.maxColor);
     this.data = punchcardOptions.converterFunction(rawData);
+    this.startAtRatio = punchcardOptions.startAtRatio || 0;
     const { earliestDate, latestDate } = PunchcardUtilities.getEarliestAndLatestDates(this.data);
     this.earliestDate = earliestDate;
     this.latestDate = latestDate;
@@ -108,7 +110,10 @@ export class PunchcardsBuilder<T> {
         for (y = 0; y < numRows; y++) {
           const numberDatum = numberData[id][x][y];
           if (numberDatum !== undefined) {
-            this.colorData[id][x][y] = this.minColor.mix(this.maxColor, !highestValue ? 0 : numberDatum / highestValue);
+            console.log(this.startAtRatio);
+            const ratio =
+              numberDatum === 0 ? 0 : ((1 - this.startAtRatio) * numberDatum) / highestValue + this.startAtRatio;
+            this.colorData[id][x][y] = this.minColor.mix(this.maxColor, !highestValue ? 0 : ratio);
           } else {
             this.colorData[id][x][y] = 'rgba(0, 0, 0, 0)';
           }
