@@ -3,7 +3,7 @@
     "baseUrl": ".",
     "downlevelIteration": true,
     "esModuleInterop": true,
-    "lib": ["ES6"],
+    "lib": ["ESNext", "DOM"],
     "module": "ES6",
     "noImplicitAny": true,
     "outDir": "dist",
@@ -14,5 +14,5 @@
     "sourceMap": true,
     "target": "ES5"
   },
-  "include": ["src/**/*", "test/**/*"]
+  "include": ["src/**/*", "example/**/*"]
 }
