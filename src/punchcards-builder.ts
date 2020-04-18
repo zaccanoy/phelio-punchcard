@@ -72,7 +72,7 @@ export class PunchcardsBuilder<T> {
       // Loop through the current x-coordinate. This should continue until the
       // initial date is greater than the latest date in the data. Every
       // iteration, we increment the x-coordinate.
-      for (let x = 0; initialDate.getTime() < this.latestDate.getTime(); x++) {
+      for (let x = 0; initialDate.getTime() <= this.latestDate.getTime(); x++) {
         // Loop through the current y-coordinate. This should continue until the
         // initial date is greater than the latest date in the data or the
         // y-coordinate is greater than or equal to the number of rows for the

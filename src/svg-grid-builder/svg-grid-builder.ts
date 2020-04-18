@@ -40,7 +40,7 @@ export class SVGGridBuilder {
 
   public toString(): string {
     return `<svg width="${this.cellBox * (this.columns.length + 1) + 44}" height="${
-      this.cellBox * Math.max(...this.columns.map((col) => col.length())) + 20
+      this.cellBox * this.rowHeaders.length + 20
     }"><g transform="translate(44, 20)">${this.columns
       .map((column) => column.toString())
       .join('')}</g><g transform="translate(40, ${20 + this.cellSize})">${this.rowHeaders
