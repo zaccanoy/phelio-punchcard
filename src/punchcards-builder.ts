@@ -6,40 +6,37 @@ import { PunchcardData } from './punchcard-data/index';
 import { PunchcardUtilities } from './punchcard-utilities';
 
 export class PunchcardsBuilder<T> {
-  /** The commit data to work with. */
-  private commitData: PunchcardData;
+  /** The data to work with. */
+  private data: PunchcardData;
   /** The earliest date in the data. */
   private earliestDate: Date;
   /** The latest date in the data. */
   private latestDate: Date;
   /** The timeframe for the punchcards. */
   private timeframe: Timeframe;
-  /** The color for zero commits. */
+  /** The color for the value zero. */
   private minColor: RGBColor;
-  /** The color for the maximum number of commits. */
+  /** The color for the maximum value. */
   private maxColor: RGBColor;
   /** The number of cells between the earliest date and what would be the
    * top-left corner of the punchcards. */
   private bufferTimeframes: number;
   /** The color data for the punchcard is a two-dimensional array of strings
    * representing the colors at every x- and y-coordinate in each punchcard,
-   * seperated by author. */
+   * seperated by ID. */
   private colorData: { [key: string]: string[][] };
   private columnHeaders: string[];
   private grids: { [key: string]: SVGGridBuilder };
 
   /**
    * Constructs a new Punchcard instance.
-   * @param rawData The source data to get the commit information from. The data
-   * is expected to be in an array, with each element representing a commit. The
-   * given author ID and commit date keys correspond to which keys contain the
-   * value for each datum respectively.
+   * @param rawData The source data.
    * @param punchcardOptions The options for the Punchcard instance.
    */
   public constructor(rawData: T, punchcardOptions: PunchcardOptions<T>) {
     this.setColors(punchcardOptions.minColor, punchcardOptions.maxColor);
-    this.commitData = punchcardOptions.converterFunction(rawData);
-    const { earliestDate, latestDate } = PunchcardUtilities.getEarliestAndLatestDates(this.commitData);
+    this.data = punchcardOptions.converterFunction(rawData);
+    const { earliestDate, latestDate } = PunchcardUtilities.getEarliestAndLatestDates(this.data);
     this.earliestDate = earliestDate;
     this.latestDate = latestDate;
     this.timeframe = punchcardOptions.timeframe | PunchcardUtilities.getTimeframe(earliestDate, latestDate);
@@ -50,22 +47,22 @@ export class PunchcardsBuilder<T> {
 
   /**
    * Sets the color data for the SVGs. After this is called, the SVGs will be
-   * generated again. Changes to the commit data or timeframe will trigger this
+   * generated again. Changes to the data or timeframe will trigger this
    * function to be called.
    */
   private setColorData(): void {
     this.columnHeaders = [];
-    let highestNumCommits = 0;
+    let highestValue = 0;
     this.colorData = {};
 
-    for (const authorId of Object.keys(this.commitData)) {
+    for (const id of Object.keys(this.data)) {
       const initialDate = PunchcardUtilities.normalizeDate(this.timeframe, this.earliestDate);
-      // Each element in the array is the number of commits.
+      // Each element in the array is the values as number data.
       const numberData: { [key: string]: number[][] } = {};
       // The final date is initialized to the next timeframe andalso incremented.
       const finalDate = new Date(initialDate.getTime());
       PunchcardUtilities.incrementDate(this.timeframe, finalDate);
-      numberData[authorId] = [];
+      numberData[id] = [];
       // Get the first timeframe index, this will be the first y index in our
       // two-dimensional array of timeframes.
       let y = this.bufferTimeframes;
@@ -79,7 +76,7 @@ export class PunchcardsBuilder<T> {
         // current timeframe. Every iteration, we increment the initial date,
         // the final date, and the y-coordinate.
         this.columnHeaders[x] = PunchcardUtilities.getColumnHeader(this.timeframe, initialDate);
-        numberData[authorId][x] = [];
+        numberData[id][x] = [];
         for (
           ;
           y < PunchcardUtilities.getNumberOfRowsForTimeframe(this.timeframe);
@@ -88,14 +85,14 @@ export class PunchcardsBuilder<T> {
             y++
         ) {
           // Set the number for each x- and y-coordinate.
-          const currentCommits = this.commitData[authorId]
+          const currentValue = this.data[id]
             .filter((value) => {
               return initialDate.getTime() <= value.date.getTime() && finalDate.getTime() > value.date.getTime();
             })
             .reduce<number>((acc, value) => (acc += value.value), 0);
-          numberData[authorId][x][y] = currentCommits;
-          if (highestNumCommits < currentCommits) {
-            highestNumCommits = currentCommits;
+          numberData[id][x][y] = currentValue;
+          if (highestValue < currentValue) {
+            highestValue = currentValue;
           }
         }
         // Reset the y-coordinate. Do this here so we can keep the initial
@@ -104,19 +101,16 @@ export class PunchcardsBuilder<T> {
       }
 
       // Populate the color data with the correct values, given the number data.
-      this.colorData[authorId] = [];
-      for (let x = 0; x < numberData[authorId].length; x++) {
-        this.colorData[authorId][x] = [];
+      this.colorData[id] = [];
+      for (let x = 0; x < numberData[id].length; x++) {
+        this.colorData[id][x] = [];
         const numRows = PunchcardUtilities.getNumberOfRowsForTimeframe(this.timeframe);
         for (y = 0; y < numRows; y++) {
-          const numberDatum = numberData[authorId][x][y];
+          const numberDatum = numberData[id][x][y];
           if (numberDatum !== undefined) {
-            this.colorData[authorId][x][y] = this.minColor.mix(
-              this.maxColor,
-              !highestNumCommits ? 0 : numberDatum / highestNumCommits,
-            );
+            this.colorData[id][x][y] = this.minColor.mix(this.maxColor, !highestValue ? 0 : numberDatum / highestValue);
           } else {
-            this.colorData[authorId][x][y] = 'rgba(0, 0, 0, 0)';
+            this.colorData[id][x][y] = 'rgba(0, 0, 0, 0)';
           }
         }
       }
@@ -124,10 +118,9 @@ export class PunchcardsBuilder<T> {
   }
 
   /**
-   * Sets the colors for the minimum and maximum number of commits.
-   * @param minColor The color for zero commits. This defaults to white.
-   * @param maxColor The color for the maximum number of commits. This defaults
-   * to black.
+   * Sets the colors for the minimum and maximum values.
+   * @param minColor The color for value zero. This defaults to white.
+   * @param maxColor The color for the maximum value. This defaults to black.
    */
   public setColors(minColor = '#EEEEEE', maxColor = '#000000'): void {
     this.minColor = new RGBColor(minColor);
@@ -198,13 +191,13 @@ export class PunchcardsBuilder<T> {
 
   private generateSVGs(): void {
     this.grids = {};
-    for (const authorId of Object.keys(this.colorData)) {
+    for (const id of Object.keys(this.colorData)) {
       const grid = new SVGGridBuilder();
-      this.grids[authorId] = grid; // NB that this is an assignment-by-reference
+      this.grids[id] = grid; // NB that this is an assignment-by-reference
       this.setColumns(grid);
       this.setRowHeaders(grid);
-      for (let x = 0; x < this.colorData[authorId].length; x++) {
-        for (const color of this.colorData[authorId][x]) {
+      for (let x = 0; x < this.colorData[id].length; x++) {
+        for (const color of this.colorData[id][x]) {
           grid.addCell(x, color);
         }
       }
@@ -213,9 +206,9 @@ export class PunchcardsBuilder<T> {
 
   public getAllSVGs(): { [key: string]: string } {
     return Object.keys(this.grids).reduce(
-      (prev, authorId) => ({
+      (prev, id) => ({
         ...prev,
-        [authorId]: this.grids[authorId].toString(),
+        [id]: this.grids[id].toString(),
       }),
       {},
     );
