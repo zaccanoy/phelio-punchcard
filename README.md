@@ -60,6 +60,6 @@ Contributions are welcome! Feel free to make a pull request. No contribution gui
 
 ## License
 
-[MIT](LICENSE.md)
+[MIT](LICENSE)
 
 ❤️
